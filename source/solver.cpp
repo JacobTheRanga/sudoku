@@ -18,8 +18,11 @@ int main(){
     bool notesBoard[ROWS][COLS][9];
     string filePath(void);
     void read(string& fileName, int sudokuBoard[][COLS]);
-    void invert(bool notesBoard[][COLS][9]);
-    void possibleOutcomes(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
+    void invert(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
+    void check(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
+    bool fill(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
+    void solve(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
+    void printNotes(bool notesBoard[][COLS][9]);
     void printBoard(int sudokuBoard[][COLS]);
 
     fileName = filePath();
@@ -27,8 +30,9 @@ int main(){
     cout << fileName << " Unsolved Board\n";
     printBoard(sudokuBoard);
 
-    invert(notesBoard);
-    possibleOutcomes(sudokuBoard, notesBoard);
+    solve(sudokuBoard, notesBoard);
+
+    printNotes(notesBoard);
 
     cout << fileName << " Solved Board\n";
     printBoard(sudokuBoard);
@@ -47,6 +51,7 @@ string filePath(){
     cout << "Filename: ";
     cin >> fileName;
     cout << endl;
+
     return fileName;
 }
 
@@ -64,50 +69,99 @@ void read(string& fileName, int sudokuBoard[][COLS]){
     return;
 }
 
-void invert(bool notesBoard[][COLS][9]){
+void invert(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
     for (int row = 0; row < ROWS; row++)
         for (int col = 0; col < COLS; col++)
             for (int num = 0; num < 9; num++)
-                notesBoard[row][col][num] = (notesBoard[row][col][num] == 1) ? 0 : 1;
+                notesBoard[row][col][num] = (sudokuBoard[row][col] == 0) ? 1 : 0;
+
     return;
 }
 
-void possibleOutcomes(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
-    for (int row = 0; row < ROWS; row++)
-        for (int col = 0; col < COLS; col++){
-            if (sudokuBoard[row][col] != 0) continue;
+void check(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+    int table[2];
+    int gridCheck[2];
+    int grid[2];
+
+    for (table[0] = 0; table[0] < ROWS; table[0]++)
+        for (table[1] = 0; table[1] < COLS; table[1]++){
+            if (sudokuBoard[table[0]][table[1]] != 0) continue;
+
             for (int lineCheck = 0; lineCheck < ROWS; lineCheck++){
-                if (sudokuBoard[lineCheck][col] != 0)
-                    notesBoard[row][col][sudokuBoard[lineCheck][col]-1] = 0;
-                if (sudokuBoard[row][lineCheck] != 0)
-                    notesBoard[row][col][sudokuBoard[row][lineCheck]-1] = 0;
+
+                if (sudokuBoard[lineCheck][table[1]] != 0)
+                    notesBoard[table[0]][table[1]][sudokuBoard[lineCheck][table[1]]-1] = 0;
+
+                if (sudokuBoard[table[0]][lineCheck] != 0)
+                    notesBoard[table[0]][table[1]][sudokuBoard[table[0]][lineCheck]-1] = 0;
             }
-            int realRow;
-            int realCol;
-            for (int gridRow = 0; gridRow < 3; gridRow++)
-                for (int gridCol = 0; gridCol < 3; gridCol++){
-                    if ((double)row / 3.0  == row / 3)
-                        realRow = row + gridRow;
-                    if ((double)row / 3.0 - row / 3 == 2.0/3.0)
-                        realRow = row - gridRow;
-                    if ((double)row / 3.0 - row / 3 == 1.0/3.0){
-                        if (gridRow == 0) realRow = row;
-                        if (gridRow == 1) realRow = row - 1;
-                        if (gridRow == 2) realRow = row + 1;
-                    }
-                    if ((double)col / 3.0  == col / 3)
-                        realCol = col + gridCol;
-                    if ((double)col / 3.0 - col / 3 == 2.0/3.0)
-                        realCol = col - gridCol;
-                    if ((double)row / 3.0 - row / 3 == 1.0/3.0){
-                        if (gridCol == 0) realCol = col;
-                        if (gridCol == 1) realCol = col - 1;
-                        if (gridCol == 2) realCol = col + 1;
-                    }
-                    if (sudokuBoard[realRow][realCol] != 0)
-                        notesBoard[row][col][sudokuBoard[realRow][realCol]-1] = 0;
+
+            for (int i = 0; i < 2; i++){
+                if (table[i] / 3.0  == table[i] / 3)
+                    grid[i] = table[i];
+                else if (table[i] / 3.0 - table[i] / 3 > 0.6)
+                    grid[i] = table[i] - 2;
+                else grid[i] = table[i] - 1;
+            }
+            for (gridCheck[0] = grid[0]; gridCheck[0] < grid[0]+3; gridCheck[0]++)
+                for (gridCheck[1] = grid[1]; gridCheck[1] < grid[1]+3; gridCheck[1]++){
+                    if (sudokuBoard[gridCheck[0]][gridCheck[1]] == 0) continue;
+                    notesBoard[table[0]][table[1]][sudokuBoard[gridCheck[0]][gridCheck[1]]-1] = 0;
                 }
         }
+
+    return;
+}
+
+bool fill(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+    int temp;
+    bool changed = false;
+    for (int row = 0; row < ROWS; row++)
+        for (int col = 0; col < COLS; col++){
+            temp = 0;
+            if (sudokuBoard[row][col] != 0) continue;
+            for (int num = 0; num < 9; num++){
+                if (notesBoard[row][col][num] == 0) continue;
+                if (temp != 0){
+                    temp = 0;
+                    break;
+                };
+                temp = notesBoard[row][col][num] * (num+1);
+            }
+            if (temp == 0) continue;
+            sudokuBoard[row][col] = temp;
+            notesBoard[row][col][temp-1] = 0;
+            changed = true;
+        }
+    return changed;
+}
+
+void solve(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+    bool changed;
+
+    invert(sudokuBoard, notesBoard);
+
+    do{
+        check(sudokuBoard, notesBoard);
+        changed = fill(sudokuBoard, notesBoard);
+    }
+    while (changed);
+
+    return;
+}
+
+void printNotes(bool notesBoard[][COLS][9]){
+    for (int row = 0; row < ROWS; row++){
+        for (int col = 0; col < COLS; col++){
+            cout << "{";
+            for (int num = 0; num < 9; num++){
+                if (notesBoard[row][col][num] == 0) continue;
+                printf(" %d", notesBoard[row][col][num] * (num+1));
+            }
+            cout << " }, ";
+        }
+        cout << endl;
+    }
 
     return;
 }
