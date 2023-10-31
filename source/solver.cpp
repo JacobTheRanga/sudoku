@@ -73,31 +73,36 @@ void Sudoku::invert(){
     return;
 }
 
-void Sudoku::initNotes(int type){
-    if (type == 0){
-        if (board[realNum[0]][checkNum[1]] != 0)
-            notes[checkNum[0]][checkNum[1]][board[realNum[0]][checkNum[1]]-1] = 0;
-        if (board[checkNum[0]][realNum[1]] != 0)
-            notes[checkNum[0]][checkNum[1]][board[checkNum[0]][realNum[1]]-1] = 0;
-    }
-    else 
-        if (board[realNum[0]][realNum[1]] != 0)
-            notes[checkNum[0]][checkNum[1]][board[realNum[0]][realNum[1]]-1] = 0;
+void Sudoku::initNotes(){
+    if (board[realNum[0]][realNum[1]] == 0) return;
+    notes[checkNum[0]][checkNum[1]][board[realNum[0]][realNum[1]]-1] = 0;
+
     return;
 }
 
-void Sudoku::check(void (Sudoku::*func)(int)){
+void Sudoku::unique(){
+    for (int num = 0; num < 9; num++){
+        if (notes[checkNum[0]][checkNum[1]][num] == 0) continue;
+        if (notes[realNum[0]][realNum[1]][num] == 1) continue;
+        for (int num2 = 0; num2 < 9; num2++)
+            if (num != num2) notes[checkNum[0]][checkNum[1]][num2] = 0;
+    }
+
+    return;
+}
+
+void Sudoku::check(void (Sudoku::*func)(void)){
     int gridCheck[2];
 
     for (checkNum[0] = 0; checkNum[0] < ROWS; checkNum[0]++)
         for (checkNum[1] = 0; checkNum[1] < COLS; checkNum[1]++){
 
-            for (realNum[0] = 0; realNum[0] < ROWS; realNum[0]++){
-                realNum[1] = realNum[0];
-                (this->*func)(0);
-            }
-
             for (int i = 0; i < 2; i++){
+                for (realNum[i] = 0; realNum[i] < ROWS; realNum[i]++){
+                    if (i == 0) realNum[1] = checkNum[1];
+                    else realNum[0] = checkNum[0];
+                    (this->*func)();
+                }
                 if (checkNum[i] / 3.0  == checkNum[i] / 3)
                     gridCheck[i] = checkNum[i];
                 else if (checkNum[i] / 3.0 - checkNum[i] / 3 > 0.6)
@@ -106,7 +111,7 @@ void Sudoku::check(void (Sudoku::*func)(int)){
             }
             for (realNum[0] = gridCheck[0]; realNum[0] < gridCheck[0]+3; realNum[0]++)
                 for (realNum[1] = gridCheck[1]; realNum[1] < gridCheck[1]+3; realNum[1]++){
-                    (this->*func)(1);
+                    (this->*func)();
                 }
         }
 
@@ -142,6 +147,7 @@ void Sudoku::solve(){
 
     do{
         check(&initNotes);
+        check(&unique);
     }
     while (fill());
 

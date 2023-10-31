@@ -17,8 +17,9 @@ class Sudoku{
     public:
     Sudoku(int newBoard[ROWS][COLS]);
     void invert(void);
-    void initNotes(int type);
-    void check(void (Sudoku::*func)(int));
+    void initNotes(void);
+    void unique(void);
+    void check(void (Sudoku::*func)(void));
     bool fill(void);
     void solve(void);
     void printNotes(void);
