@@ -15,7 +15,7 @@ int main(){
     fileName = filePath();
     read(fileName, newBoard);
     Sudoku board(newBoard);
-    
+
     cout << fileName << " Unsolved Board\n";
     board.printBoard();
 
@@ -73,35 +73,40 @@ void Sudoku::invert(){
     return;
 }
 
-void Sudoku::check(){
-    int table[2];
+void Sudoku::initNotes(int type){
+    if (type == 0){
+        if (board[realNum[0]][checkNum[1]] != 0)
+            notes[checkNum[0]][checkNum[1]][board[realNum[0]][checkNum[1]]-1] = 0;
+        if (board[checkNum[0]][realNum[1]] != 0)
+            notes[checkNum[0]][checkNum[1]][board[checkNum[0]][realNum[1]]-1] = 0;
+    }
+    else 
+        if (board[realNum[0]][realNum[1]] != 0)
+            notes[checkNum[0]][checkNum[1]][board[realNum[0]][realNum[1]]-1] = 0;
+    return;
+}
+
+void Sudoku::check(void (Sudoku::*func)(int)){
     int gridCheck[2];
-    int grid[2];
 
-    for (table[0] = 0; table[0] < ROWS; table[0]++)
-        for (table[1] = 0; table[1] < COLS; table[1]++){
-            if (board[table[0]][table[1]] != 0) continue;
+    for (checkNum[0] = 0; checkNum[0] < ROWS; checkNum[0]++)
+        for (checkNum[1] = 0; checkNum[1] < COLS; checkNum[1]++){
 
-            for (int lineCheck = 0; lineCheck < ROWS; lineCheck++){
-
-                if (board[lineCheck][table[1]] != 0)
-                    notes[table[0]][table[1]][board[lineCheck][table[1]]-1] = 0;
-
-                if (board[table[0]][lineCheck] != 0)
-                    notes[table[0]][table[1]][board[table[0]][lineCheck]-1] = 0;
+            for (realNum[0] = 0; realNum[0] < ROWS; realNum[0]++){
+                realNum[1] = realNum[0];
+                (this->*func)(0);
             }
 
             for (int i = 0; i < 2; i++){
-                if (table[i] / 3.0  == table[i] / 3)
-                    grid[i] = table[i];
-                else if (table[i] / 3.0 - table[i] / 3 > 0.6)
-                    grid[i] = table[i] - 2;
-                else grid[i] = table[i] - 1;
+                if (checkNum[i] / 3.0  == checkNum[i] / 3)
+                    gridCheck[i] = checkNum[i];
+                else if (checkNum[i] / 3.0 - checkNum[i] / 3 > 0.6)
+                    gridCheck[i] = checkNum[i] - 2;
+                else gridCheck[i] = checkNum[i] - 1;
             }
-            for (gridCheck[0] = grid[0]; gridCheck[0] < grid[0]+3; gridCheck[0]++)
-                for (gridCheck[1] = grid[1]; gridCheck[1] < grid[1]+3; gridCheck[1]++){
-                    if (board[gridCheck[0]][gridCheck[1]] == 0) continue;
-                    notes[table[0]][table[1]][board[gridCheck[0]][gridCheck[1]]-1] = 0;
+            for (realNum[0] = gridCheck[0]; realNum[0] < gridCheck[0]+3; realNum[0]++)
+                for (realNum[1] = gridCheck[1]; realNum[1] < gridCheck[1]+3; realNum[1]++){
+                    (this->*func)(1);
                 }
         }
 
@@ -133,15 +138,12 @@ bool Sudoku::fill(){
 
 
 void Sudoku::solve(){
-    bool changed;
-
     invert();
 
     do{
-        check();
-        changed = fill();
+        check(&initNotes);
     }
-    while (changed);
+    while (fill());
 
     return;
 }
