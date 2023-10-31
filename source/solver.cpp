@@ -1,41 +1,30 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include "solver.h"
 
 using namespace std;
 namespace fs = filesystem;
-
-const string GAME_DIR = "..\\sudokuFiles\\";
-const string EXT = ".sudoku";
-const int ROWS = 9;
-const int COLS = 9;
 
 int main(){
     cout << "\nSUDOKU SOLVER\n\n";
 
     string fileName;
-    int sudokuBoard[ROWS][COLS];
-    bool notesBoard[ROWS][COLS][9];
-    string filePath(void);
-    void read(string& fileName, int sudokuBoard[][COLS]);
-    void invert(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
-    void check(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
-    bool fill(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
-    void solve(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]);
-    void printNotes(bool notesBoard[][COLS][9]);
-    void printBoard(int sudokuBoard[][COLS]);
+    int newBoard[ROWS][COLS];
 
     fileName = filePath();
-    read(fileName, sudokuBoard);
+    read(fileName, newBoard);
+    Sudoku board(newBoard);
+    
     cout << fileName << " Unsolved Board\n";
-    printBoard(sudokuBoard);
+    board.printBoard();
 
-    solve(sudokuBoard, notesBoard);
+    board.solve();
 
-    printNotes(notesBoard);
+    board.printNotes();
 
     cout << fileName << " Solved Board\n";
-    printBoard(sudokuBoard);
+    board.printBoard();
 
     return 0;
 }
@@ -55,7 +44,7 @@ string filePath(){
     return fileName;
 }
 
-void read(string& fileName, int sudokuBoard[][COLS]){
+void read(string& fileName, int board[][COLS]){
     ifstream file(GAME_DIR + fileName + EXT);
     string line;
 
@@ -63,37 +52,43 @@ void read(string& fileName, int sudokuBoard[][COLS]){
         for (int row = 0; row < ROWS; row++){
             file >> line;
             for (int col = 0; col < COLS; col++)
-                sudokuBoard[row][col] = line[col] - '0';
+                board[row][col] = line[col] - '0';
         }
 
     return;
 }
 
-void invert(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+Sudoku::Sudoku(int newBoard[ROWS][COLS]){
+    for (int row = 0; row < ROWS; row++)
+        for (int col = 0; col < COLS; col++)
+            board[row][col] = newBoard[row][col];
+}
+
+void Sudoku::invert(){
     for (int row = 0; row < ROWS; row++)
         for (int col = 0; col < COLS; col++)
             for (int num = 0; num < 9; num++)
-                notesBoard[row][col][num] = (sudokuBoard[row][col] == 0) ? 1 : 0;
+                notes[row][col][num] = (board[row][col] == 0) ? 1 : 0;
 
     return;
 }
 
-void check(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+void Sudoku::check(){
     int table[2];
     int gridCheck[2];
     int grid[2];
 
     for (table[0] = 0; table[0] < ROWS; table[0]++)
         for (table[1] = 0; table[1] < COLS; table[1]++){
-            if (sudokuBoard[table[0]][table[1]] != 0) continue;
+            if (board[table[0]][table[1]] != 0) continue;
 
             for (int lineCheck = 0; lineCheck < ROWS; lineCheck++){
 
-                if (sudokuBoard[lineCheck][table[1]] != 0)
-                    notesBoard[table[0]][table[1]][sudokuBoard[lineCheck][table[1]]-1] = 0;
+                if (board[lineCheck][table[1]] != 0)
+                    notes[table[0]][table[1]][board[lineCheck][table[1]]-1] = 0;
 
-                if (sudokuBoard[table[0]][lineCheck] != 0)
-                    notesBoard[table[0]][table[1]][sudokuBoard[table[0]][lineCheck]-1] = 0;
+                if (board[table[0]][lineCheck] != 0)
+                    notes[table[0]][table[1]][board[table[0]][lineCheck]-1] = 0;
             }
 
             for (int i = 0; i < 2; i++){
@@ -105,58 +100,59 @@ void check(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
             }
             for (gridCheck[0] = grid[0]; gridCheck[0] < grid[0]+3; gridCheck[0]++)
                 for (gridCheck[1] = grid[1]; gridCheck[1] < grid[1]+3; gridCheck[1]++){
-                    if (sudokuBoard[gridCheck[0]][gridCheck[1]] == 0) continue;
-                    notesBoard[table[0]][table[1]][sudokuBoard[gridCheck[0]][gridCheck[1]]-1] = 0;
+                    if (board[gridCheck[0]][gridCheck[1]] == 0) continue;
+                    notes[table[0]][table[1]][board[gridCheck[0]][gridCheck[1]]-1] = 0;
                 }
         }
 
     return;
 }
 
-bool fill(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+bool Sudoku::fill(){
     int temp;
     bool changed = false;
     for (int row = 0; row < ROWS; row++)
         for (int col = 0; col < COLS; col++){
             temp = 0;
-            if (sudokuBoard[row][col] != 0) continue;
+            if (board[row][col] != 0) continue;
             for (int num = 0; num < 9; num++){
-                if (notesBoard[row][col][num] == 0) continue;
+                if (notes[row][col][num] == 0) continue;
                 if (temp != 0){
                     temp = 0;
                     break;
                 };
-                temp = notesBoard[row][col][num] * (num+1);
+                temp = notes[row][col][num] * (num+1);
             }
             if (temp == 0) continue;
-            sudokuBoard[row][col] = temp;
-            notesBoard[row][col][temp-1] = 0;
+            board[row][col] = temp;
+            notes[row][col][temp-1] = 0;
             changed = true;
         }
     return changed;
 }
 
-void solve(int sudokuBoard[][COLS], bool notesBoard[][COLS][9]){
+
+void Sudoku::solve(){
     bool changed;
 
-    invert(sudokuBoard, notesBoard);
+    invert();
 
     do{
-        check(sudokuBoard, notesBoard);
-        changed = fill(sudokuBoard, notesBoard);
+        check();
+        changed = fill();
     }
     while (changed);
 
     return;
 }
 
-void printNotes(bool notesBoard[][COLS][9]){
+void Sudoku::printNotes(){
     for (int row = 0; row < ROWS; row++){
         for (int col = 0; col < COLS; col++){
             cout << "{";
             for (int num = 0; num < 9; num++){
-                if (notesBoard[row][col][num] == 0) continue;
-                printf(" %d", notesBoard[row][col][num] * (num+1));
+                if (notes[row][col][num] == 0) continue;
+                printf(" %d", notes[row][col][num] * (num+1));
             }
             cout << " }, ";
         }
@@ -166,7 +162,7 @@ void printNotes(bool notesBoard[][COLS][9]){
     return;
 }
 
-void printBoard(int sudokuBoard[][COLS]){
+void Sudoku::printBoard(){
     for (int row = 0; row < ROWS; row++){
         if ((double)row / 3 == int(row / 3)){
             for (int i = 0; i < COLS+4; i++) cout << "---";
@@ -174,8 +170,8 @@ void printBoard(int sudokuBoard[][COLS]){
         }
         for (int col = 0; col < COLS; col++){
             if ((double)col / 3 == int(col / 3)) cout << " | ";
-            if (sudokuBoard[row][col] == 0) cout << "   ";
-            else cout << " " << sudokuBoard[row][col] << " ";
+            if (board[row][col] == 0) cout << "   ";
+            else cout << " " << board[row][col] << " ";
             if (col == COLS-1) cout << " | ";
         }
         cout << endl;
