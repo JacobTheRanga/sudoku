@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include "solver.h"
+#include "solver.hpp"
 
 using namespace std;
 namespace fs = filesystem;
@@ -80,24 +80,21 @@ void Sudoku::initNotes(){
     return;
 }
 
-// void Sudoku::unique(){
-//     if (total > 0) return;
-//     if (notes[checkNum[0]][checkNum[1]][num] == 0) return;
-//     if (notes[realNum[0]][realNum[1]][num] == 1){
-//         total = 1;
-//         return;
-//     }
-//     for (int num2 = 0; num2 < 9; num2++)
-//         if (num != num2) notes[checkNum[0]][checkNum[1]][num2] = 0;
+void Sudoku::unique(){
+    for (int num = 0; num < 9; num++){
+        if (notes[checkNum[0]][checkNum[1]][num] ==
+            notes[realNum[0]][realNum[1]][num])
+            continue;
+        
+    }
 
-//     return;
-// }
+    return;
+}
 
 void Sudoku::check(void (Sudoku::*func)(void)){
     int gridCheck[2];
     for (checkNum[0] = 0; checkNum[0] < ROWS; checkNum[0]++)
         for (checkNum[1] = 0; checkNum[1] < COLS; checkNum[1]++){
-            total = 0;
             for (int i = 0; i < 2; i++){
                 for (realNum[i] = 0; realNum[i] < ROWS; realNum[i]++){
                     if (i == 0) realNum[1] = checkNum[1];
