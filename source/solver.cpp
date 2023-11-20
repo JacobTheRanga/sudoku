@@ -35,7 +35,8 @@ string filePath(){
     cout << "What game do you want to solve?\n";
     for (const auto& entry : fs::directory_iterator(GAME_DIR)){
         fs::path path(entry.path());
-        if (path.extension() == EXT) cout << path.stem() << endl;
+        if (path.extension() == EXT) 
+            cout << path.stem() << endl;
     }
     cout << "Filename: ";
     cin >> fileName;
@@ -54,8 +55,6 @@ void read(string& fileName, int board[][COLS]){
             for (int col = 0; col < COLS; col++)
                 board[row][col] = line[col] - '0';
         }
-
-    return;
 }
 
 Sudoku::Sudoku(int newBoard[ROWS][COLS]){
@@ -69,15 +68,12 @@ void Sudoku::invert(){
         for (int col = 0; col < COLS; col++)
             for (int num = 0; num < 9; num++)
                 notes[row][col][num] = (board[row][col] == 0) ? 1 : 0;
-
-    return;
 }
 
 void Sudoku::initNotes(){
-    if (board[realNum[0]][realNum[1]] == 0) return;
+    if (board[realNum[0]][realNum[1]] == 0)
+        return;
     notes[checkNum[0]][checkNum[1]][board[realNum[0]][realNum[1]]-1] = 0;
-
-    return;
 }
 
 void Sudoku::unique(){
@@ -87,8 +83,6 @@ void Sudoku::unique(){
             continue;
         
     }
-
-    return;
 }
 
 void Sudoku::check(void (Sudoku::*func)(void)){
@@ -97,8 +91,10 @@ void Sudoku::check(void (Sudoku::*func)(void)){
         for (checkNum[1] = 0; checkNum[1] < COLS; checkNum[1]++){
             for (int i = 0; i < 2; i++){
                 for (realNum[i] = 0; realNum[i] < ROWS; realNum[i]++){
-                    if (i == 0) realNum[1] = checkNum[1];
-                    else realNum[0] = checkNum[0];
+                    if (i == 0) 
+                        realNum[1] = checkNum[1];
+                    else 
+                        realNum[0] = checkNum[0];
                     (this->*func)();
                 }
                 if (checkNum[i] / 3.0  == checkNum[i] / 3)
@@ -112,31 +108,44 @@ void Sudoku::check(void (Sudoku::*func)(void)){
                     (this->*func)();
                 }
         }
-
-    return;
 }
 
+// returns true if there are squares with only 1 valid number, as well as filling them
 bool Sudoku::fill(){
     int temp;
-    bool changed = false;
     for (int row = 0; row < ROWS; row++)
         for (int col = 0; col < COLS; col++){
+            // resets temp value for each square
             temp = 0;
-            if (board[row][col] != 0) continue;
+
+            // checks whether or not the square is filled
+            if (board[row][col] != 0)
+                continue;
+
+            // iterates over notes binary
             for (int num = 0; num < 9; num++){
-                if (notes[row][col][num] == 0) continue;
+                // breaks loop and resets temp value if there is more than 1 valid number
                 if (temp != 0){
                     temp = 0;
                     break;
-                };
+                }
+
+                // sets temp value to valid number in notes binary
                 temp = notes[row][col][num] * (num+1);
             }
-            if (temp == 0) continue;
+            
+            // skips square if there is more than 1 valid number
+            if (temp == 0)
+                continue;
+
+            // sets square to the only valid number and sets notes binary to 0
             board[row][col] = temp;
             notes[row][col][temp-1] = 0;
-            changed = true;
+
+            // 
+            return true;
         }
-    return changed;
+    return false;
 }
 
 
@@ -148,8 +157,6 @@ void Sudoku::solve(){
         // check(&unique);
     }
     while (fill());
-
-    return;
 }
 
 void Sudoku::printNotes(){
@@ -157,25 +164,24 @@ void Sudoku::printNotes(){
         for (int col = 0; col < COLS; col++){
             cout << "{";
             for (int num = 0; num < 9; num++){
-                if (notes[row][col][num] == 0) continue;
+                if (notes[row][col][num] == 0)
+                    continue;
                 printf(" %d", notes[row][col][num] * (num+1));
             }
             cout << " }, ";
         }
-        cout << endl;
+        cout << endl << endl;
     }
-
-    return;
 }
 
 void Sudoku::printBoard(){
     for (int row = 0; row < ROWS; row++){
-        if ((double)row / 3 == int(row / 3)){
+        if (row / 3.0 == row / 3){
             for (int i = 0; i < COLS+4; i++) cout << "---";
             cout << endl;
         }
         for (int col = 0; col < COLS; col++){
-            if ((double)col / 3 == int(col / 3)) cout << " | ";
+            if (col / 3.0 == col / 3) cout << " | ";
             if (board[row][col] == 0) cout << "   ";
             else cout << " " << board[row][col] << " ";
             if (col == COLS-1) cout << " | ";
@@ -186,6 +192,4 @@ void Sudoku::printBoard(){
             cout << endl << endl;
         }
     }
-
-    return;
 }
